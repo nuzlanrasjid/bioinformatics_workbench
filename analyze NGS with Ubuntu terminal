@@ -1,0 +1,35 @@
+# script to analyze NGS with Ubuntu terminal
+# sratoolkit, samtools, ea-utils, sratoolkit, BWA, etc. have been installed
+
+# Data Retrieval with sratoolkit
+prefetch SR1000000
+fastq-dump SR1000000
+
+# QC
+sudo apt-get install fastqc
+chmod a+x *astqc
+
+# Sequence Trimming (ea-utils)
+fastq-mcf -q N n/a SR1000000.fastq -o SRq.fastq
+
+# Alignment (samtools, BWA)
+bwa mem reference.fasta SRq.fastq > SR_align.sam
+samtools view -bS SR_align.sam -o SR_align.bam
+
+# Mark Duplicates (samtools)
+samtools sort SR_align.bam -o SR_sort.bam #sort file
+samtools index SR_sort.bam #index file
+samtools markdup SR_sort.bam -o SR_marked.bam
+
+# Variant Calling (GATK)
+gatk HaplotypeCaller -R reference.fasta -I SR_sort.bam -O SR_initialvariant.vcf
+
+# Variant Filtering (GATK)
+gatk VariantFiltration -R reference.fasta -V SR_initialvariant.vcf -O SR_filtervariant.vcf --filterexpression “QD < 2.0 || FS > 60.0 ||  MQ < 40.0" --filter-name “basic_filters”
+
+# Base Quality Score Recalibration (BQSR) (GATK)
+gatk BaseRecalibrator -R reference.fasta -I  SR_sort.bam -O SR_data.table --known-sites SR_filtervariant.vcf
+gatk ApplyBQSR -R reference.fasta -I SR_sort.bam -O SR_data.bam -bqsr SR_data.table
+
+# Create Consensus Sequence (bcftools)
+cat reference.fasta | bcftools consensus SR_filtervariant.vcf.gz > SR_consensus.fa
