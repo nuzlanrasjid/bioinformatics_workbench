@@ -1,4 +1,48 @@
 # script for DNA-seq analysis
 # setwd (D:/your/directory/PATH)
 
-#
+# load libraries
+library("ShortRead")
+library("Rsubread")
+library("ggplot2")
+
+# NOTE: add sratoolkit and SPAdes genomic (if doesn't have information about reference sequence) to your PATH
+
+# getting sequence from SRA NCBI database
+shell("prefetch SRR1000000") #change SRR with your preference
+shell("fastq-dump SRR1000000")
+wgs_data <- readLines("SRR1000000.fastq") #adding to R environment with your preference name, I use wgs_data as my name
+
+# QC 
+wgs_seq <- readFastq('SRR1000000.fastq')
+wgs_bf <- qa(wgs_seq, lane=1) # note: need to identify the lanes of sequencing before trimming
+wgs_bf <- as.data.frame(wgs_bf)
+report(wgs_bf)
+
+# read quality score of QC
+wgs_readqualityscore <- as.data.frame(wgs_bf[["readQualityScore"]])
+ggplot(wgs_readqualityscore, aes(x = quality, y = density)) +
+  geom_line() +
+  labs(title = "Read Quality Score", x = "Quality", y = "density") +
+  theme_minimal()
+
+# quality trimming
+wgs_af <- trimTailw(wgs_seq, k = 20, a = "N", halfwidth = 2)
+writeFastq(wgs_af, "SRwgs_af.fastq", compress = FALSE)
+
+# getting reference sequence with SPAdes genomic (
+system("wsl /mnt/c/directory/PATH/SPAdes-4.0.0-Linux/bin/spades.py -s /mnt/d/directory/PATH/SRwgs_af.fastq -o /mnt/d/output/DNA_analysis --isolate")
+contigs <- readDNAStringSet("contigs.fasta")
+longest <- contigs[which.max(width(contigs))]
+writeXStringSet(longest, "longest.fasta")
+
+# alignment
+buildindex(basename = "index", reference = "longest.fasta")
+align(index = "D:/Rstudio/WGSanalysis/index", readfile1 = "SRwgs_af.fastq", output_file = "SR.bam")
+bam_data <- scanBam("SR.bam")
+
+# reading component of alignment file "SR.bam"
+head(bam_data) # all information of alignment result
+bam_data[[1]]$seq #sequnce
+bam_data[[1]]$qual #quality scores
+bam_data[[1]]$mapq #Mapping quality
