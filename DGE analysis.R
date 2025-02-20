@@ -1,4 +1,4 @@
-# script to perform DGE
+# script to perform Normalization to Visualization
 # setwd("D:/Rstudio gene expression analysis/DESeq2")
 
 #load libraries
