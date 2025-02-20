@@ -3,6 +3,7 @@
 
 # load libraries
 library("ShortRead")
+library ("Biostrings")
 library("Rsubread")
 library("ggplot2")
 
