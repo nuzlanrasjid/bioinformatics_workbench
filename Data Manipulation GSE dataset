@@ -1,27 +1,11 @@
 # script analyzing manipulate gene expression data
 # setwd("D:/Rstudio gene expression analysis/R script")
-setwd("D:/Rstudio gene expression analysis/R script")
-
-#installing packages RNA-seq Data analysis
-install.packages("dplyr")
-install.packages("tidyverse")
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install("GEOquery")
-# Install cluster package to user-specific library
-install.packages("cluster", lib = "C:/Users/LENOVO/AppData/Local/R/win-library/4.4")
-
-# Verify installation
-if ("GEOquery" %in% rownames(installed.packages())) {
-  print("GEOquery is installed and loaded successfully.")
-} else {
-  print("GEOquery is not installed.")
-}
+setwd ("D:/Rstudio----/R script")
 
 # load libraries
-library("dplyr")
-library("tidyverse")
-library("GEOquery")
+library ("dplyr")
+library ("tidyverse")
+library ("GEOquery")
 
 # Install conflicted package if not already installed
 install.packages("conflicted")
@@ -34,7 +18,7 @@ conflict_prefer("filter", "dplyr")
 conflict_prefer("intersect", "dplyr")
 
 # read in the data
-dat <- read.csv(file ="D:/Rstudio gene expression analysis/R script/GSE183947_fpkm.csv")
+dat <- read.csv(file ="D:/PATH/GSE183947_fpkm.csv")
 dim(dat)
 
 #get metadata
@@ -59,10 +43,6 @@ metadata.modified <- metadata %>%
   mutate(tissue = gsub("tissue:", "", tissue)) %>%
   mutate(metastasis = gsub("metastasis:", "", metastasis)) %>%
   head(60)
-
-head(metadata.modified)
-
-head(dat)
 
 #reshaping data
 dat.long <- dat %>%
